@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Progressor 2.0</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#0b0c0d;--card:rgba(34,36,38,.65);--bd:rgba(255,255,255,.08);--tx:#ececec;--mut:#8b9096;--em:#10b981;--am:#f59e0b;--rd:#ef4444;--gd:#fbbf24}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:radial-gradient(circle at 15% 0,#1b1e1d,var(--bg) 55%);color:var(--tx);min-height:100vh}
+.wrap{max-width:1150px;margin:auto;padding:18px}
+.card{background:var(--card);backdrop-filter:blur(12px);border:1px solid var(--bd);border-radius:18px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.35);margin-bottom:16px}
+h1{font-size:22px;margin:0;letter-spacing:1px}h1 span{color:var(--em)}
+h3{margin:0 0 10px;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut)}
+.top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:800px){.grid{grid-template-columns:1fr}}
+input{background:#15171a;border:1px solid var(--bd);color:var(--tx);border-radius:10px;padding:8px;font-size:14px;outline:none;width:100%}
+input:focus{border-color:var(--em)}
+button{background:#1d2022;color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:9px 14px;cursor:pointer;font-size:14px;font-weight:600}
+button:hover{border-color:var(--em)}
+.pri{background:var(--em);color:#04130d;border:0}.dng{color:var(--rd)}
+#welcome{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:9;padding:18px}
+#welcome .card{max-width:400px;width:100%;text-align:center}
+#welcome input{margin:6px 0 12px;text-align:center}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.tab{padding:7px 14px;border-radius:20px;background:#15171a;border:1px solid var(--bd);cursor:pointer;font-size:13px}
+.tab.on{background:var(--em);color:#04130d;font-weight:700}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:760px}
+th{font-size:11px;color:var(--mut);text-transform:uppercase;padding:6px 3px}
+td{padding:3px}td input{text-align:center;padding:7px 3px}td.n input{text-align:left;min-width:110px}
+.avg{font-weight:800;text-align:center;font-size:16px}
+.adv td{font-size:12px;color:var(--mut);padding:0 6px 10px}
+.red{color:var(--rd);font-weight:700}
+.big{font-size:34px;font-weight:800}
+.pill{display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700}
+ul{margin:0;padding:0;list-style:none}li{padding:6px 0;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;font-size:14px}
+.ch{height:260px}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;z-index:20;padding:18px}
+#modal .card{max-width:380px;width:100%;margin:0;text-align:center}
+#werr{color:var(--rd);font-size:13px;min-height:18px;margin-bottom:8px}
+</style>
+</head>
+<body>
+<div id="welcome"><div class="card">
+<h1>PROGRESS<span>OR</span> 2.0</h1>
+<p style="color:var(--mut);font-size:14px">Ton coach scolaire personnel.</p>
+<div id="wl"></div>
+<input id="wn" placeholder="Ton nom">
+<input id="wp" type="number" step="0.01" min="0" max="20" placeholder="Moyenne de l'année précédente">
+<div id="werr"></div>
+<button class="pri" style="width:100%" onclick="start()">COMMENCER</button>
+</div></div>
+
+<div class="wrap" id="app" style="display:none">
+<div class="top">
+<h1>PROGRESS<span>OR</span> 2.0</h1>
+<div class="row">
+<button onclick="switchUser()">👥 Changer d'utilisateur</button>
+<button onclick="exportImg()">📸 Exporter en image</button>
+<button class="dng" onclick="wipe()">Effacer ce profil</button>
+</div></div>
+
+<div class="grid">
+<div class="card"><h3>Profil élève</h3>
+<div style="font-size:18px"><b id="pn"></b></div>
+<div style="color:var(--mut)">Moyenne précédente : <b id="pp" style="color:var(--tx)"></b></div></div>
+<div class="card" id="coach"><h3>Coach Progressor</h3><div id="cm"></div></div>
+</div>
+
+<div class="card">
+<h3>Trimestres</h3>
+<div class="tabs" id="tabs"></div>
+<div class="row" style="margin-bottom:12px">
+<input id="qn" placeholder="Nom du trimestre (ex : Trimestre 2)" style="max-width:260px">
+<button onclick="addQ()">+ Trimestre</button>
+<button class="dng" onclick="delQ()">Supprimer ce trimestre</button>
+</div>
+<div class="row" style="margin-bottom:12px">
+<input id="sn" placeholder="Nouvelle matière (ex : Maths)" style="max-width:260px">
+<button class="pri" onclick="addS()">+ Matière</button>
+</div>
+<div class="tw"><table><thead><tr><th style="text-align:left">Matière</th><th>I1</th><th>I2</th><th>I3</th><th>I4</th><th>D1</th><th>D2</th><th>D3</th><th>Coef</th><th>Moy.</th><th>Objectif</th><th></th></tr></thead><tbody id="tb"></tbody></table></div>
+<div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+<div>Moyenne générale : <span class="big" id="gavg">—</span></div>
+<span class="pill" id="gst"></span></div>
+</div>
+
+<div class="grid">
+<div class="card"><h3>Objectif général</h3>
+<div class="row"><input id="go" type="number" step="0.1" min="0" max="20" placeholder="Ex : 18" style="max-width:120px"><span style="color:var(--mut);font-size:13px">sur 20</span></div>
+<ul id="gl" style="margin-top:10px"></ul></div>
+<div class="card"><h3>Prédiction</h3>
+<button class="pri" onclick="predict()">Prédire</button>
+<div id="pr" style="margin-top:12px;color:var(--mut)">Clique sur « Prédire ».</div></div>
+</div>
+
+<div class="grid">
+<div class="card"><h3>Évolution</h3><div class="ch"><canvas id="chart"></canvas></div></div>
+<div class="card"><h3>Historique</h3><ul id="hist"></ul></div>
+</div>
+</div>
+
+<div id="modal"><div class="card">
+<div id="mt" style="font-size:16px;margin-bottom:14px"></div>
+<div class="row" style="justify-content:center">
+<button onclick="closeAsk()">Annuler</button>
+<button class="pri" style="background:var(--rd);color:#fff" id="my">Confirmer</button>
+</div></div></div>
+
+<script>
+const $=id=>document.getElementById(id),KEY='progressor2';
+function ask(msg,cb){
+ $('mt').textContent=msg;$('modal').style.display='flex';
+ $('my').onclick=()=>{closeAsk();cb()};
+}
+function closeAsk(){$('modal').style.display='none'}
+let S=null,chart=null,DB={users:[],cur:null};
+try{
+ const r=JSON.parse(localStorage.getItem('progressor3'));
+ if(r&&Array.isArray(r.users))DB=r;
+ else{const o=JSON.parse(localStorage.getItem(KEY));if(o&&o.name){o.id=Math.random().toString(36).slice(2,9);DB.users.push(o)}}
+}catch(e){}
+S=DB.users.find(u=>u.id===DB.cur)||null;
+const save=()=>{try{localStorage.setItem('progressor3',JSON.stringify(DB))}catch(e){}};
+const num=v=>(v===''||v==null||isNaN(+v))?null:Math.min(20,Math.max(0,+v));
+const f=x=>x==null?'—':(+x).toFixed(2);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,9);
+
+function sAvg(s){const n=[...s.i,...s.d].map(num).filter(x=>x!==null);return n.length?{a:n.reduce((p,c)=>p+c,0)/n.length,n:n.length}:null}
+const coef=s=>{const c=parseFloat(s.c);return c>0?c:1};
+function qAvg(q){let t=0,w=0;q.s.forEach(s=>{const r=sAvg(s);if(r){t+=r.a*coef(s);w+=coef(s)}});return w?t/w:null}
+const cur=()=>S.q[S.act];
+
+function status(a){
+ if(a==null)return{c:'var(--mut)',t:'—',k:'none'};
+ const d=a-S.prev;
+ if(a>=16&&d>=-.5)return{c:'var(--gd)',t:'🏆 Excellence',k:'gold'};
+ if(d>=.5)return{c:'var(--em)',t:'📈 Progression',k:'up'};
+ if(d>-.5)return{c:'var(--am)',t:'➖ Stagnation',k:'flat'};
+ return{c:'var(--rd)',t:'📉 Régression',k:'down'};
+}
+
+function start(){
+ const n=$('wn').value.trim(),p=num($('wp').value);
+ if(!n||p===null){$('werr').textContent='Saisis ton nom et une moyenne entre 0 et 20.';return}
+ $('werr').textContent='';
+ S={id:uid(),name:n,prev:p,q:[{id:uid(),n:'Trimestre 1',s:[]}],act:0,goal:''};
+ DB.users.push(S);DB.cur=S.id;save();$('wn').value='';$('wp').value='';show();
+}
+function show(){
+ $('welcome').style.display=S?'none':'flex';$('app').style.display=S?'block':'none';
+ if(S){$('pn').textContent=S.name;$('pp').textContent=f(S.prev);$('go').value=S.goal;$('pr').innerHTML='Clique sur « Prédire ».';render()}
+ else renderUsers();
+}
+function renderUsers(){
+ $('wl').innerHTML=DB.users.length?'<div style="color:var(--mut);font-size:13px;margin-bottom:8px">Qui es-tu ?</div>'+
+  DB.users.map(u=>`<button style="width:100%;margin-bottom:6px" onclick="pick('${u.id}')">👤 ${esc(u.name)} — ${f(u.prev)}</button>`).join('')+
+  '<div style="color:var(--mut);font-size:13px;margin:14px 0 6px">ou ajoute un nouvel utilisateur</div>':'';
+}
+function pick(id){DB.cur=id;S=DB.users.find(u=>u.id===id)||null;save();show()}
+function switchUser(){DB.cur=null;S=null;save();show()}
+function wipe(){
+ ask('Effacer le profil de '+S.name+' (matières, trimestres, objectifs, historique) ? Les autres utilisateurs ne sont pas touchés.',()=>{
+  DB.users=DB.users.filter(u=>u!==S);DB.cur=null;S=null;save();
+  if(chart){chart.destroy();chart=null}show();
+ });
+}
+function addQ(){const n=$('qn').value.trim()||'Trimestre '+(S.q.length+1);S.q.push({id:uid(),n,s:[]});S.act=S.q.length-1;$('qn').value='';save();render()}
+function delQ(){
+ const last=S.q.length<2;
+ ask(last?'Vider le trimestre « '+cur().n+' » ?':'Supprimer « '+cur().n+' » ?',()=>{
+  if(last)S.q=[{id:uid(),n:'Trimestre 1',s:[]}];
+  else S.q.splice(S.act,1);
+  S.act=0;save();render();
+ });
+}
+function addS(){
+ const n=$('sn').value.trim();if(!n)return;
+ cur().s.push({id:uid(),n,i:['','','',''],d:['','',''],c:1,g:''});$('sn').value='';save();render();
+}
+function delS(j){cur().s.splice(j,1);save();render()}
+
+function render(){
+ $('tabs').innerHTML=S.q.map((q,k)=>`<div class="tab ${k==S.act?'on':''}" onclick="S.act=${k};save();render()">${esc(q.n)}</div>`).join('');
+ const q=cur();
+ $('tb').innerHTML=q.s.map((s,j)=>{
+  const inp=(k,v,w)=>`<td${w?' style="width:'+w+'"':''}><input type="number" step="0.01" min="0" max="20" data-j="${j}" data-k="${k}" value="${v}"></td>`;
+  return `<tr><td class="n"><input data-j="${j}" data-k="n" value="${esc(s.n)}"></td>`+
+  s.i.map((v,x)=>inp('i'+x,v)).join('')+s.d.map((v,x)=>inp('d'+x,v)).join('')+
+  `<td style="width:60px"><input type="number" step="0.5" min="0.5" data-j="${j}" data-k="c" value="${s.c}"></td>
+  <td class="avg" id="a${j}"></td>
+  <td style="width:80px"><input type="number" step="0.1" min="0" max="20" data-j="${j}" data-k="g" value="${s.g}"></td>
+  <td><button class="dng" title="Supprimer" onclick="delS(${j})">🗑️</button></td></tr>
+  <tr class="adv"><td colspan="12" id="v${j}"></td></tr>`}).join('');
+ refresh();
+}
+$('tb').addEventListener('input',e=>{
+ const t=e.target,j=+t.dataset.j,k=t.dataset.k;if(isNaN(j))return;
+ const s=cur().s[j];
+ if(k=='n'||k=='c'||k=='g')s[k]=t.value;
+ else s[k[0]][+k[1]]=t.value;
+ save();refresh();
+});
+$('go').addEventListener('input',e=>{S.goal=e.target.value;save();refreshGoal()});
+
+function refresh(){
+ const q=cur();
+ q.s.forEach((s,j)=>{
+  const r=sAvg(s),a=$('a'+j),v=$('v'+j);if(!a)return;
+  a.textContent=r?f(r.a):'—';
+  const g=num(s.g);let h='';
+  if(r&&g!==null){
+   if(r.a>=g)h='✅ Objectif '+f(g)+' atteint.';
+   else{
+    const x1=g*(r.n+1)-r.a*r.n,y=(g*(r.n+2)-r.a*r.n)/2,fm=z=>z>20.005?'<span class="red">impossible (>20)</span>':'<span class="red">'+f(Math.max(0,z))+'</span>';
+    h='🎯 Objectif '+f(g)+' — Interrogation suivante : '+fm(x1)+' · Devoir suivant : '+fm(x1)+' · Interro + devoir (chacune) : '+fm(y);
+   }
+  }
+  v.innerHTML=h;
+ });
+ const A=qAvg(q),st=status(A);
+ $('gavg').textContent=f(A);$('gavg').style.color=st.c;
+ $('gst').textContent=st.t;$('gst').style.cssText='background:'+st.c+'22;color:'+st.c;
+ coach(A,st);refreshGoal();hist();
+}
+function refreshGoal(){
+ const q=cur(),A=qAvg(q),G=num(S.goal),L=$('gl');
+ if(A==null||G===null){L.innerHTML='<li style="color:var(--mut)">Saisis des notes et un objectif.</li>';return}
+ if(A>=G){L.innerHTML='<li>✅ Objectif atteint !</li>';return}
+ const act=q.s.filter(s=>sAvg(s));
+ const sc=act.reduce((p,s)=>p+coef(s),0),den=act.reduce((p,s)=>p+coef(s)*(20-sAvg(s).a),0);
+ if(!den){L.innerHTML='<li>Objectif inatteignable.</li>';return}
+ const need=(G-A)*sc;
+ L.innerHTML=act.map(s=>{const d=need*(20-sAvg(s).a)/den;return `<li><span>${esc(s.n)}</span><b class="red">+${d.toFixed(2)}</b></li>`}).join('')+
+ `<li style="color:var(--mut);font-size:12px"><span>Points à gagner par matière sur la moyenne</span></li>`;
+}
+function coach(A,st){
+ const p=S.prev;let m;
+ if(p<10)m='Tu progresses. Chaque point gagné est une victoire.';
+ else if(p<14)m='Tu peux dépasser ton niveau précédent cette année.';
+ else if(p<16)m='Tu as une base solide. Vise l\'excellence, un cap à la fois.';
+ else m='Tu possèdes déjà un très bon niveau. Maintiens l\'excellence.';
+ const x={gold:'Excellent travail, continue ainsi !',up:'Tu fais mieux que l\'an dernier ('+(A!=null?'+'+(A-p).toFixed(2):'')+'). Bravo !',flat:'Tu es au niveau de l\'an dernier. Un petit effort pour passer au-dessus.',down:'Tu es en dessous de ton niveau précédent ('+(A!=null?(A-p).toFixed(2):'')+'). Tu peux rebondir : identifie la matière à renforcer.',none:'Ajoute des notes pour recevoir ton analyse.'}[st.k];
+ $('cm').innerHTML=`<div style="font-size:15px">${m}</div><div style="margin-top:8px;color:${st.c};font-weight:700">${x}</div>`;
+}
+function hist(){
+ const pts=S.q.map(q=>({n:q.n,a:qAvg(q)}));
+ let last=S.prev;
+ $('hist').innerHTML=`<li><span>Année précédente</span><b>${f(S.prev)}</b></li>`+pts.map(p=>{
+  let tr='';if(p.a!=null){const d=p.a-last;tr=d>.05?'<span style="color:var(--em)"> ▲ '+d.toFixed(2)+'</span>':d<-.05?'<span style="color:var(--rd)"> ▼ '+d.toFixed(2)+'</span>':'<span style="color:var(--am)"> ▶ 0</span>';last=p.a}
+  return `<li><span>${esc(p.n)}</span><b>${f(p.a)}${tr}</b></li>`}).join('');
+ drawChart(pts);
+}
+function drawChart(pts){
+ if(typeof Chart==='undefined')return;
+ const vals=pts.map(p=>p.a),done=vals.filter(v=>v!=null);
+ const lastv=done.length?done[done.length-1]:null,st=status(lastv);
+ const col=getComputedStyle(document.documentElement).getPropertyValue(st.c.replace(/var\((.*)\)/,'$1')).trim()||'#10b981';
+ const labels=['Année préc.',...pts.map(p=>p.n)];
+ const data={labels,datasets:[
+  {label:'Moyenne',data:[S.prev,...vals],borderColor:col,backgroundColor:col+'33',fill:true,tension:.3,pointRadius:5,pointBackgroundColor:col,spanGaps:true},
+  {label:'Niveau précédent',data:labels.map(()=>S.prev),borderColor:'#8b9096',borderDash:[6,6],pointRadius:0,borderWidth:1}]};
+ const opt={maintainAspectRatio:false,scales:{y:{min:0,max:20,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#8b9096'}},x:{grid:{display:false},ticks:{color:'#8b9096'}}},plugins:{legend:{labels:{color:'#ececec'}}}};
+ if(chart){chart.data=data;chart.update()}else chart=new Chart($('chart'),{type:'line',data,options:opt});
+}
+function predict(){
+ const pts=S.q.map(q=>qAvg(q)).filter(v=>v!=null),box=$('pr');
+ if(!pts.length){box.textContent='Pas assez de notes.';return}
+ let p;
+ if(pts.length==1)p=pts[0]+(pts[0]-S.prev)*.25;
+ else{
+  const n=pts.length,xs=pts.map((_,i)=>i),mx=(n-1)/2,my=pts.reduce((a,b)=>a+b,0)/n;
+  let nu=0,de=0;xs.forEach((x,i)=>{nu+=(x-mx)*(pts[i]-my);de+=(x-mx)**2});
+  const sl=nu/de;p=my+sl*(n-mx);
+ }
+ p=Math.min(20,Math.max(0,p));
+ const last=pts[pts.length-1],st=status(p);
+ const tr=p>last+.1?'📈 Progression':p<last-.1?'📉 Régression':'➖ Stabilité';
+ box.innerHTML=`<div>Prévision de la moyenne finale probable :</div><div class="big" style="color:${st.c}">${p.toFixed(2)}</div><div style="color:var(--tx);font-weight:700">Statut : ${tr}</div><div style="font-size:12px;margin-top:4px">Estimation basée sur la tendance de tes trimestres.</div>`;
+}
+
+function exportImg(){
+ const q=cur();if(!q)return;
+ const cols=['Matière','I1','I2','I3','I4','D1','D2','D3','Coef','Moy.'],W=[240,64,64,64,64,64,64,64,70,90];
+ const pad=30,rh=42,tw=W.reduce((a,b)=>a+b,0),H=pad*2+110+rh*(q.s.length+2),sc=2;
+ const c=document.createElement('canvas');c.width=(tw+pad*2)*sc;c.height=H*sc;
+ const x=c.getContext('2d');x.scale(sc,sc);
+ x.fillStyle='#0b0c0d';x.fillRect(0,0,tw+pad*2,H);
+ x.textBaseline='middle';x.fillStyle='#10b981';x.font='bold 22px sans-serif';x.textAlign='left';
+ x.fillText('PROGRESSOR 2.0 — '+q.n,pad,pad+14);
+ x.fillStyle='#ececec';x.font='15px sans-serif';
+ x.fillText('Élève : '+S.name+'   ·   Moyenne précédente : '+f(S.prev),pad,pad+48);
+ let y=pad+80;
+ const row=(cells,bg,col,bold)=>{
+  x.fillStyle=bg;x.fillRect(pad,y,tw,rh);
+  let cx=pad;
+  cells.forEach((t,i)=>{
+   x.fillStyle=Array.isArray(col)?col[i]:col;x.font=(bold?'bold ':'')+'14px sans-serif';
+   if(i==0){x.textAlign='left';x.fillText(String(t),cx+12,y+rh/2)}
+   else{x.textAlign='center';x.fillText(String(t),cx+W[i]/2,y+rh/2)}
+   cx+=W[i];
+  });y+=rh;
+ };
+ row(cols,'#26292c','#8b9096',true);
+ q.s.forEach((s,j)=>{
+  const r=sAvg(s),n=[...s.i,...s.d].map(v=>{const z=num(v);return z===null?'':z});
+  row([s.n,...n,coef(s),r?f(r.a):'—'],j%2?'#16181a':'#1b1d20','#ececec',false);
+ });
+ const A=qAvg(q),st=status(A),hex={gold:'#fbbf24',up:'#10b981',flat:'#f59e0b',down:'#ef4444',none:'#8b9096'}[st.k];
+ row(['MOYENNE GÉNÉRALE','','','','','','','','',f(A)],'#26292c','#ececec',true);
+ x.fillStyle=hex;x.textAlign='right';x.font='bold 14px sans-serif';
+ x.fillText(st.t,tw+pad-4,pad+48);
+ const a=document.createElement('a');a.href=c.toDataURL('image/png');
+ a.download='progressor-'+q.n.replace(/\s+/g,'-').toLowerCase()+'.png';a.click();
+}
+show();
+</script>
+</body>
+</html>
