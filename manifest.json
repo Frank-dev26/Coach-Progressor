@@ -1,11 +1,26 @@
 {
+  "id": "/",
   "name": "Progressor",
-  "short_name": "ProgresAI",
+  "short_name": "Progress AI",
+  "description": "Une application académique du futur pour le calcul intelligent des moyennes.",
+  "lang": "fr",
+  "dir": "ltr",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": [
+    "fullscreen",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
+  "theme_color": "#101827",
   "background_color": "#ffffff",
-  "theme_color": "#b2b36b",
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "icon-72.png",
