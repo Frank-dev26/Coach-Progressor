@@ -22,7 +22,7 @@
       "is192x192": false
     },
     {
-      "src": "https://frank-dev26.github.io/Coach-Progressor/favicon-32.png",
+      "src": "https://frank-dev26.github.io/Coach-Progressor/icon-32.png",
       "type": "image/png",
       "sizes": "32x32",
       "isSquare": true,
@@ -35,7 +35,7 @@
       "is192x192": false
     },
     {
-      "src": "https://frank-dev26.github.io/Coach-Progressor/favicon-16.png",
+      "src": "https://frank-dev26.github.io/Coach-Progressor/icon-16.png",
       "type": "image/png",
       "sizes": "16x16",
       "isSquare": true,
